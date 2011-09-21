@@ -32,7 +32,7 @@ module LinearT
       @threshold    = 5 # Max diff
     end
     
-    def update!(ingoing_trip_id = nil)
+    def update!
       url = %w{
         http://vasttrafik.se/External_Services/NextTrip.asmx/GetForecast?
         identifier=%s&
@@ -40,18 +40,22 @@ module LinearT
       }.join % [api_key, @id]
 
       download!(url).css("forecast items item").each do |stop|      
-        puts "AAAAAAAAA: #{stop.attr("next_trip_forecast_time")}"
         current_time = Time.parse(stop.attr("next_trip_forecast_time")).to_i
         diff         = current_time - Time.now.to_i
         destination  = stop.at_css("destination").content
         trip_id      = stop.attr("trip_id")
         line         = stop.attr("line_id")
-        
+                
         if last_time = @last_time[trip_id] and sleep_time = @sleep_time[trip_id]
           # The tram is slower/faster that we expected
           if (current_time - last_time).abs > @threshold
-            update_client!
+            update_client = true
           end
+        end
+        
+        # Is this the first run?
+        if update_client or init?
+          update_client!
         end
         
         @last_time[trip_id] = current_time
@@ -71,12 +75,22 @@ module LinearT
         # Nope, it has already left the station
         # x ----------------- station --- tram ------------ next_station
         elsif @trip_ids.include?(trip_id) and dest = @stations[line] and station = dest[destination]
-          station.update!(trip_id)
+          station.init.update!
           wipe(trip_id)
         elsif @trip_ids.include?(trip_id)
           wipe(trip_id)
         end        
       end
+    end
+    
+    def init
+      tap { @init = true }
+    end
+    
+    def init?
+      is = @init
+      @init = false
+      return is
     end
     
     def update_with_in(seconds)
@@ -86,7 +100,7 @@ module LinearT
     end
     
     def update_client!
-      # Update client ...
+      puts "DATA!"
     end
     
     def wipe(trip_id)

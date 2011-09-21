@@ -27,25 +27,25 @@ describe LinearT::Station do
     
     it "should add a trip id" do
       Timecop.travel(Time.parse("21 Sep 2011 16:10:37 GMT")) do
-        @station.update!(nil)
+        @station.update!
         @station.trip_ids.should include("30810")
       end
     end
     
     it "should NOT add a trip id" do
       Timecop.travel(Time.parse("22 Sep 2011 16:10:37 GMT")) do
-        @station.update!(nil)
+        @station.update!
         @station.trip_ids.should_not include("30810")
       end
     end
     
     it "should remove trip id if trap has passed the current station" do
       Timecop.travel(Time.parse("21 Sep 2011 16:10:37 GMT")) do
-        @station.update!(nil)
+        @station.update!
       end
       
       Timecop.travel(Time.parse("21 Sep 2011 17:30:37 GMT")) do
-        @station.update!(nil)
+        @station.update!
         @station.trip_ids.should_not include("30810")
       end
     end
@@ -58,13 +58,15 @@ describe LinearT::Station do
     
     it "should notify the next station" do
       Timecop.travel(Time.parse("21 Sep 2011 16:10:37 GMT")) do
-        @station.update!(nil)
+        @station.update!
       end
       
-      @stations["4"]["Mölndal"].should_receive(:update!)
+      station = @stations["4"]["Mölndal"]
+      station.should_receive(:update!)
+      station.should_receive(:init).and_return(station)
       
       Timecop.travel(Time.parse("21 Sep 2011 17:10:37 GMT")) do
-        @station.update!(nil)
+        @station.update!
       end
     end
   end
@@ -78,7 +80,7 @@ describe LinearT::Station do
       Timecop.travel(Time.parse("21 Sep 2011 16:10:37 GMT")) do
         # Next update in 10 sec
         @station.should_receive(:update_with_in).with(10)
-        @station.update!(nil)
+        @station.update!
       end
     end
     
@@ -86,7 +88,7 @@ describe LinearT::Station do
       Timecop.travel(Time.parse("21 Sep 2011 16:14:55 GMT")) do
         # Next update in 5 sec
         @station.should_receive(:update_with_in).with(5)
-        @station.update!(nil)
+        @station.update!
       end
     end    
   end
