@@ -95,18 +95,22 @@ module LinearT
     
     def update_with_in(seconds)
       if defined?(EM)
+        puts "update_with_in: #{seconds}".yellow
         EM.add_timer(seconds) { self.update! }
+      else
+        puts "EM does not exist".red
       end
     end
     
     def update_client!
-      puts "DATA!"
+      puts "update_client!".yellow
     end
     
     def wipe(trip_id)
       @trip_ids.delete(trip_id)
       @sleep_time.delete(trip_id)
       @last_time.delete(trip_id)
+      puts "Whipe: #{trip_id}".yellow
     end
   end
 end
