@@ -1,3 +1,4 @@
+require "update"
 module LinearT
   class Station
     def initialize(channel)

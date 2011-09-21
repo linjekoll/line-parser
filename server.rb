@@ -1,4 +1,5 @@
 require "eventmachine"
+require_relative "lib/station"
 
 EM.run do
   worker_channel = EM::Channel.new
