@@ -29,7 +29,7 @@ module LinearT
       @id           = id # Station id
     end
     
-    def update!(ingoing_trip_id)
+    def update!(ingoing_trip_id = nil)
       url = %w{
         http://vasttrafik.se/External_Services/NextTrip.asmx/GetForecast?
         identifier=%s&
@@ -46,6 +46,13 @@ module LinearT
         # x ------------- tram --- station ---------------- next_station
         if dest = @travel_times[line] and time = dest[destination] and diff < time and diff > 0
           @trip_ids.push(trip_id)
+          if diff > 30
+            sleep_time = 10
+          else
+            sleep_time = 60
+          end
+          
+          update_with_in(sleep_time)
         # Nope, it has already left the station
         # x ----------------- station --- tram ------------ next_station
         elsif @trip_ids.include?(trip_id) and dest = @stations[line] and station = dest[destination]
@@ -55,6 +62,10 @@ module LinearT
           @trip_ids.delete(trip_id)
         end        
       end
+    end
+    
+    def update_with_in(seconds)
+      EM.add_timer(seconds) { self.update! }
     end
   end
 end

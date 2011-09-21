@@ -68,4 +68,17 @@ describe LinearT::Station do
       end
     end
   end
+  
+  describe "time" do
+    before(:each) do
+      @station = LinearT::Station.new(nil, "00003980", @travel_times)
+    end
+    it "should be able to calculate update time" do
+      Timecop.travel(Time.parse("21 Sep 2011 16:10:37 GMT")) do
+        # Next update in 10 sec
+        @station.should_receive(:update_with_in).with(10)
+        @station.update!(nil)
+      end
+    end
+  end
 end
