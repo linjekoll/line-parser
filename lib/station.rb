@@ -20,15 +20,15 @@ module LinearT
     #   }
     # }
     
-    def initialize(channel, id, travel_times = {}, stations = {})
-      @travel_times = {}.merge(travel_times)
+    def initialize(options)
+      @travel_times = {}.merge(options[:travel_times] || {})
       @start_time   = {}
       @last_time    = {}
       @sleep_time   = {}
-      @stations     = {}.merge(stations)
+      @stations     = {}.merge(options[:stations] || {})
       @trip_ids     = [] # A list of nearby trains
-      @channel      = channel # EM channel
-      @id           = id # Station id
+      @channel      = options[:channel] # EM channel
+      @id           = options[:id] # Station id
       @threshold    = 5 # Max diff
     end
     
@@ -53,7 +53,7 @@ module LinearT
           end
         end
         
-        # Is this the first run?
+        # Is this the first run? {init?}
         if update_client or init?
           update_client!
         end

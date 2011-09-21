@@ -18,11 +18,17 @@ describe LinearT::Station do
         "Angered" => station2
       }
     }
+    
+    @options = {
+      stations: @stations,
+      travel_times: @travel_times,
+      id: "00003980"
+    }
   end
   
   describe "trip id" do
     before(:each) do
-      @station = LinearT::Station.new(nil, "00003980", @travel_times)
+      @station = LinearT::Station.new(@options)
     end
     
     it "should add a trip id" do
@@ -40,6 +46,10 @@ describe LinearT::Station do
     end
     
     it "should remove trip id if trap has passed the current station" do
+      station = @options[:stations]["4"]["Mölndal"]
+      station.should_receive(:update!)
+      station.should_receive(:init).and_return(station)
+      
       Timecop.travel(Time.parse("21 Sep 2011 16:10:37 GMT")) do
         @station.update!
       end
@@ -53,7 +63,7 @@ describe LinearT::Station do
   
   describe "station" do
     before(:each) do
-      @station = LinearT::Station.new(nil, "00003980", @travel_times, @stations)
+      @station = LinearT::Station.new(@options)
     end
     
     it "should notify the next station" do
@@ -73,7 +83,7 @@ describe LinearT::Station do
   
   describe "time" do
     before(:each) do
-      @station = LinearT::Station.new(nil, "00003980", @travel_times)
+      @station = LinearT::Station.new(@options)
     end
     
     it "should be able to calculate update time, > 30" do
