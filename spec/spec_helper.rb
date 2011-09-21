@@ -2,6 +2,7 @@ require "rspec"
 require "webmock/rspec"
 require "vcr"
 require "json"
+require "timecop"
 
 require_relative "../lib/station"
 require_relative "../lib/update"
