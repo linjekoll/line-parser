@@ -1,0 +1,86 @@
+--- 
+- !ruby/struct:VCR::HTTPInteraction 
+  request: !ruby/struct:VCR::Request 
+    method: :get
+    uri: http://vasttrafik.se:80/External_Services/TravelPlanner.asmx/GetRoute?dateTimeTravel=2011-09-15%2012:00&fromId=00012110&identifier=3e04f738-a43f-4670-b2ec-abd775867ac5&numberOfResulsAfter=1&numberOfResultBefore=0&priorityId=1&toId=00001075&whenId=1
+    body: 
+    headers: 
+      accept: 
+      - "*/*; q=0.5, application/xml"
+      accept-encoding: 
+      - gzip, deflate
+  response: !ruby/struct:VCR::Response 
+    status: !ruby/struct:VCR::ResponseStatus 
+      code: 200
+      message: OK
+    headers: 
+      expires: 
+      - "-1"
+      date: 
+      - Wed, 21 Sep 2011 13:02:14 GMT
+      content-type: 
+      - text/xml; charset=utf-8
+      server: 
+      - Microsoft-IIS/7.5
+      cache-control: 
+      - no-cache
+      pragma: 
+      - no-cache
+      x-aspnet-version: 
+      - 2.0.50727
+      x-powered-by: 
+      - ASP.NET
+      x-ua-compatible: 
+      - IE=edge,Chrome=1
+      transfer-encoding: 
+      - chunked
+      content-encoding: 
+      - gzip
+      vary: 
+      - Accept-Encoding
+    body: !binary |
+      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
+      kP6kxHNgOtVPWLz4D2BLYyjzQgAA
+
+    http_version: "1.1"

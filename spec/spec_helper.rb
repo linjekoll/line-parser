@@ -5,6 +5,7 @@ require "json"
 
 require_relative "../lib/station"
 require_relative "../lib/update"
+require_relative "../lib/line_populator"
 
 WebMock.disable_net_connect!
 
