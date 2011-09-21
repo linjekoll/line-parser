@@ -83,8 +83,8 @@ describe LinearT::Station do
     end
     
     it "should be able to calculate update time, < 30" do
-      Timecop.travel(Time.parse("21 Sep 2011 16:12:37 GMT")) do
-        # Next update in 10 sec
+      Timecop.travel(Time.parse("21 Sep 2011 16:14:55 GMT")) do
+        # Next update in 5 sec
         @station.should_receive(:update_with_in).with(5)
         @station.update!(nil)
       end

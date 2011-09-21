@@ -49,10 +49,9 @@ module LinearT
           if diff > 30
             sleep_time = 10
           else
-            sleep_time = 60
+            sleep_time = 5
           end
           
-          puts "DIFF: #{diff}"
           update_with_in(sleep_time)
         # Nope, it has already left the station
         # x ----------------- station --- tram ------------ next_station
