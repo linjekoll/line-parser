@@ -88,7 +88,6 @@ describe LinearT::Station do
         @station.should_receive(:update_with_in).with(5)
         @station.update!(nil)
       end
-    end
-    
+    end    
   end
 end
