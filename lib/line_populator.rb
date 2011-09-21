@@ -28,14 +28,20 @@ module LinearT
          if before = @stops[index - 1] and index > 0
            result = stop[:stop_time].to_i - before[:stop_time].to_i
            @stops[index].merge!({
-             before[:name] => result 
+             before: {
+               name: before[:name],
+               time: result 
+             }
            })
          end
 
          if after = @stops[index + 1]
            result = after[:stop_time].to_i - stop[:stop_time].to_i
            @stops[index].merge!({
-             after[:name] => result 
+             after: {
+               name: after[:name],
+               time: result
+             }
            })
          end
        end
