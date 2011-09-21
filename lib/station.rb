@@ -43,8 +43,11 @@ module LinearT
         line        = stop.attr("line_id")
         
         # Is the tram nearby?
+        # x ------------- tram --- station ---------------- next_station
         if dest = @travel_times[line] and time = dest[destination] and diff < time and diff > 0
           @trip_ids.push(trip_id)
+        # Nope, it has already left the station
+        # x ----------------- station --- tram ------------ next_station
         elsif @trip_ids.include?(trip_id) and dest = @stations[line] and station = dest[destination]
           station.update!(trip_id)
           @trip_ids.delete(trip_id)
