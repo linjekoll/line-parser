@@ -1,6 +1,6 @@
 # -*- encoding : utf-8 -*-
-require "update"
-require "base"
+require_relative "update"
+require_relative "base"
 
 module LinearT
   class Station < LinearT::Base
