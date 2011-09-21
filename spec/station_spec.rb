@@ -8,7 +8,18 @@ describe LinearT::Station do
         "Angered" => 250
       }
     }
-    @station = LinearT::Station.new(nil, "00003980", @travel_times)
+    
+    station1 = mock(Object.new)
+    station2 = mock(Object.new)
+    
+    @stations = {
+      "4" => {
+        "Mölndal" => station1,
+        "Angered" => station2
+      }
+    }
+    
+    @station = LinearT::Station.new(nil, "00003980", @travel_times, @stations)
   end
   
   describe "trip id" do    
@@ -34,6 +45,20 @@ describe LinearT::Station do
       Timecop.travel(Time.parse("21 Sep 2011 16:30:37 GMT")) do
         @station.update!(nil)
         @station.trip_ids.should_not include("30810")
+      end
+    end
+  end
+  
+  describe "station" do
+    it "should notify the next station" do
+      Timecop.travel(Time.parse("21 Sep 2011 16:10:37 GMT")) do
+        @station.update!(nil)
+      end
+      
+      @stations["4"]["Mölndal"].should_receive(:update!)
+      
+      Timecop.travel(Time.parse("21 Sep 2011 17:10:37 GMT")) do
+        @station.update!(nil)
       end
     end
   end

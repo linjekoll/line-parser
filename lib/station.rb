@@ -12,12 +12,18 @@ module LinearT
     #     "Mölndal" => 60,
     #     "Angered" => 80
     #   }
+    # }    
+    # @stations = {
+    #   "4" => {
+    #     "Mölndal" => station1,
+    #     "Angered" => station2
+    #   }
     # }
     
-    def initialize(channel, id, travel_times = {})
+    def initialize(channel, id, travel_times = {}, stations = {})
       @travel_times = {}.merge(travel_times)
       @start_time   = {}
-      @stations     = {}
+      @stations     = {}.merge(stations)
       @trip_ids     = [] # A list of nearby trains
       @channel      = channel # EM channel
       @id           = id # Station id
@@ -39,8 +45,8 @@ module LinearT
         # Is the tram nearby?
         if dest = @travel_times[line] and time = dest[destination] and diff < time and diff > 0
           @trip_ids.push(trip_id)
-        else
-          @trip_ids.delete(trip_id)
+        elsif @trip_ids.include?(trip_id) and dest = @stations[line] and station = dest[destination]
+          station.update!(trip_id)
         end
       end
     end
