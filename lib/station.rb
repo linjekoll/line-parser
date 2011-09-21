@@ -40,6 +40,7 @@ module LinearT
       }.join % [api_key, @id]
 
       download!(url).css("forecast items item").each do |stop|      
+        puts "AAAAAAAAA: #{stop.attr("next_trip_forecast_time")}"
         current_time = Time.parse(stop.attr("next_trip_forecast_time")).to_i
         diff         = current_time - Time.now.to_i
         destination  = stop.at_css("destination").content
