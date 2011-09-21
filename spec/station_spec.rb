@@ -18,11 +18,13 @@ describe LinearT::Station do
         "Angered" => station2
       }
     }
-    
-    @station = LinearT::Station.new(nil, "00003980", @travel_times, @stations)
   end
   
-  describe "trip id" do    
+  describe "trip id" do
+    before(:each) do
+      @station = LinearT::Station.new(nil, "00003980", @travel_times)
+    end
+    
     it "should add a trip id" do
       Timecop.travel(Time.parse("21 Sep 2011 16:10:37 GMT")) do
         @station.update!(nil)
@@ -42,7 +44,7 @@ describe LinearT::Station do
         @station.update!(nil)
       end
       
-      Timecop.travel(Time.parse("21 Sep 2011 16:30:37 GMT")) do
+      Timecop.travel(Time.parse("21 Sep 2011 17:30:37 GMT")) do
         @station.update!(nil)
         @station.trip_ids.should_not include("30810")
       end
@@ -50,6 +52,10 @@ describe LinearT::Station do
   end
   
   describe "station" do
+    before(:each) do
+      @station = LinearT::Station.new(nil, "00003980", @travel_times, @stations)
+    end
+    
     it "should notify the next station" do
       Timecop.travel(Time.parse("21 Sep 2011 16:10:37 GMT")) do
         @station.update!(nil)

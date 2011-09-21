@@ -47,7 +47,10 @@ module LinearT
           @trip_ids.push(trip_id)
         elsif @trip_ids.include?(trip_id) and dest = @stations[line] and station = dest[destination]
           station.update!(trip_id)
-        end
+          @trip_ids.delete(trip_id)
+        elsif @trip_ids.include?(trip_id)
+          @trip_ids.delete(trip_id)
+        end        
       end
     end
   end
