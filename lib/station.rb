@@ -52,6 +52,7 @@ module LinearT
             sleep_time = 60
           end
           
+          puts "DIFF: #{diff}"
           update_with_in(sleep_time)
         # Nope, it has already left the station
         # x ----------------- station --- tram ------------ next_station
