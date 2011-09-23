@@ -23,7 +23,7 @@ module LinearT
     def initialize(options)
       @travel_times = {}.merge(options[:travel_times] || {})
       @start_time   = {}
-      @last_time    = {}
+      @previous_forecast_time    = {}
       @sleep_time   = {}
       @stations     = {}.merge(options[:stations] || {})
       @trip_ids     = [] # A list of nearby trains
@@ -40,15 +40,15 @@ module LinearT
       }.join % [api_key, @id]
 
       download!(url).css("forecast items item").each do |stop|      
-        current_time = Time.parse(stop.attr("next_trip_forecast_time")).to_i
-        diff         = current_time - Time.now.to_i
+        forecast_time = Time.parse(stop.attr("next_trip_forecast_time")).to_i
+        diff         = forecast_time - Time.now.to_i
         destination  = stop.at_css("destination").content
         trip_id      = stop.attr("trip_id")
         line         = stop.attr("line_id")
                 
-        if last_time = @last_time[trip_id] and sleep_time = @sleep_time[trip_id]
+        if last_time = @previous_forecast_time[trip_id] and sleep_time = @sleep_time[trip_id]
           # The tram is slower/faster that we expected
-          if (current_time - last_time).abs > @threshold
+          if (forecast_time - last_time).abs > @threshold
             update_client = true
           end
         end
@@ -58,11 +58,11 @@ module LinearT
           update_client!
         end
         
-        @last_time[trip_id] = current_time
+        @previous_forecast_time[trip_id] = forecast_time
         
         # Is the tram nearby?
         # x ------------- tram --- station ---------------- next_station
-        if dest = @travel_times[line] and time = dest[destination] and diff < time and diff > 0
+        if dest = @travel_times[line] and timetable_time = dest[destination] and diff < timetable_time and diff > 0
           @trip_ids.push(trip_id)
           
           if diff > 30
@@ -71,7 +71,7 @@ module LinearT
             @sleep_time[trip_id] = 5
           end
           
-          update_with_in(@sleep_time[trip_id])
+          update_in(@sleep_time[trip_id])
         # Nope, it has already left the station
         # x ----------------- station --- tram ------------ next_station
         elsif @trip_ids.include?(trip_id) and dest = @stations[line] and station = dest[destination]
@@ -93,9 +93,9 @@ module LinearT
       return is
     end
     
-    def update_with_in(seconds)
+    def update_in(seconds)
       if defined?(EM)
-        puts "update_with_in: #{seconds}".yellow
+        puts "update_in: #{seconds}".yellow
         EM.add_timer(seconds) { self.update! }
       else
         puts "EM does not exist".red
@@ -109,7 +109,7 @@ module LinearT
     def wipe(trip_id)
       @trip_ids.delete(trip_id)
       @sleep_time.delete(trip_id)
-      @last_time.delete(trip_id)
+      @previous_forecast_time.delete(trip_id)
       puts "Whipe: #{trip_id}".yellow
     end
   end
