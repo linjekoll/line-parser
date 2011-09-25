@@ -114,10 +114,10 @@ module LinearT
         # The time it took to fetch the data {@request_time} should not be apart of the calculation.
         threshold_diff = ((forecast_time - previous_forecast_time) - @request_time).abs
         if threshold_diff  > @threshold
-          puts "Alert; something has gone wrong along the way. Threshold diff is now #{threshold_diff}".red
+          puts "Alert! Something has gone wrong along the way. Threshold diff is now #{threshold_diff}".red
         else
           puts "Current threshold diff is #{threshold_diff}, max is #{@threshold}.".green
-        end
+        end        
       else
         puts "First time this station is updated using trip id #{trip_id}".yellow
       end
