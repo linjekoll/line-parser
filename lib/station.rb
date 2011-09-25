@@ -117,7 +117,7 @@ module LinearT
           puts "Alert! Something has gone wrong along the way. Threshold diff is now #{threshold_diff}".red
         else
           puts "Current threshold diff is #{threshold_diff}, max is #{@threshold}.".green
-        end        
+        end
       else
         puts "First time this station is updated using trip id #{trip_id}".yellow
       end
@@ -148,22 +148,6 @@ module LinearT
       else
         wipe(trip_id)
       end        
-    end
-    
-    #
-    # @return Station
-    #
-    def init
-      tap { @init = true }
-    end
-    
-    #
-    # @return Boolean Has Station#init been called?
-    #
-    def init?
-      is = @init
-      @init = false
-      return is
     end
     
     #
