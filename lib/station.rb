@@ -69,7 +69,9 @@ module LinearT
         stopId=%s
       }.join % [api_key, @id]
       
-      return download!(url).css("forecast items item").map do |stop|
+      start_timer = Time.now.to_i
+      
+      departures = download!(url).css("forecast items item").map do |stop|
         forecast_time = Time.parse(stop.attr("next_trip_forecast_time")).to_i
         {
           forecast_time: forecast_time,
@@ -79,6 +81,11 @@ module LinearT
           line: stop.attr("line_id")
         }
       end
+      
+      # How long did the request take?
+      @request_time = Time.now.to_i - start_timer
+      
+      return destination
     end
     
     #
@@ -103,8 +110,9 @@ module LinearT
       
       if previous_forecast_time = @previous_forecast_time[trip_id] and sleep_time = @sleep_time[trip_id]
         # The given tram is slower/faster that we expected.
-        # ∆ Time may not be larger then {@threshold} 
-        threshold_diff = (forecast_time - previous_forecast_time).abs
+        # ∆ Time may not be larger then {@threshold}
+        # The time it took to fetch the data {@request_time} should not be apart of the calculation.
+        threshold_diff = (forecast_time - previous_forecast_time).abs - @request_time
         if threshold_diff  > @threshold
           update_client = true
         else
