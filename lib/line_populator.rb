@@ -15,11 +15,11 @@ module LinearT
     end
     
     def start
-      @start ||= content.at_css("details item from stop_name").content
+      @start ||= content.at_css("details item from stop_name").content.split(" ").first.downcase
     end
     
     def stop
-      @stop ||= content.at_css("details item to stop_name").content
+      @stop ||= content.at_css("details item to stop_name").content.split(" ").first.downcase
     end
     
     def stations

@@ -18,27 +18,19 @@ module LinearT
     attr_reader :station, :line
     
     def initialize(station)
-      @station = station
-      # @travel_times = {}.merge(options[:travel_times] || {})
-      # @start_time   = {}
-      # @previous_forecast_time = {}
-      # @sleep_time   = {}
-      # @stations     = {}.merge(options[:stations] || {})
-      # @trip_ids     = [] # A list of nearby trains
-      # @channel      = options[:channel] # EM channel
-      # @id           = options[:id] # Station id
-      
-      @threshold              = 5 # Max diff
+      @station                = station
+      @threshold              = 5
       @previous_forecast_time = {}
       @sleep_time             = {}
     end
 
-    
+    #
     # Getter and setter methods for;
     # @travel_times, @surrounding_station_objects, @next, @previous
-    # #line must be set before this can be used
+    # Station#line must be set before this can be used
     # Take a look at the comments at the bottom of 
     # the page for more info.
+    #
     [:travel_times, :surrounding_stations, :next, :previous].each do |method|
       define_method(method) do
         instance_variable_get("@#{method}")[@line] || {}
@@ -50,7 +42,23 @@ module LinearT
         instance_variable_get("@#{method}")[@line] = value
       end
     end
-        
+    
+    #
+    # @return A list of departures
+    # Each departure on the following form
+    # {
+    #   forecast_time: 2011-09-25 22:18:51 +0200
+    #   diff: 41
+    #   destination: "angered"
+    #   trip_id: 123123
+    #   line: "4"
+    # }
+    #
+    # forecast_time: Time When should it be here.
+    # diff: Fixnum When (in seconds) is the tram here?
+    # destination: End station as a string.
+    # line: The current line.
+    # 
     def departures
       url = %w{
         http://vasttrafik.se/External_Services/NextTrip.asmx/GetForecast?
@@ -63,7 +71,7 @@ module LinearT
         {
           forecast_time: forecast_time,
           diff: forecast_time - Time.now.to_i,
-          destination: stop.at_css("destination").content,
+          destination: stop.at_css("destination").content.split(" ").first.downcase,
           trip_id: stop.attr("trip_id"),
           line: stop.attr("line_id")
         }
@@ -79,22 +87,20 @@ module LinearT
       # is should update the given {trip_id}
       unless departute = departures.select{ |d| d[:trip_id] == trip_id }.first
         # TODO: Alert the next stop that is should update it self.
-        # nextstation.init.update!(trip_id) <= Something like that
+        # surrounding_stations[departures[:destination]].init.update!(trip_id)
         puts "Trip isn't here, abort abort!".yellow; return
       end
       
-      forecast_time = departute[:forecast_time]
-      destination   = departute[:destination]
-      line          = departute[:line]
-      diff          = departute[:diff]
+      forecast_time = departute[:forecast_time] # When should it be here. Time object
+      destination   = departute[:destination]   # End station as a string; Example angered
+      line          = departute[:line]          # The current line
+      diff          = departute[:diff]          # When (in seconds) is the tram here?
       
-      # All data selected using;
-      # :travel_times, :surrounding_stations, :next, :previous
-      # depends on {line}
       self.line = line
       
       if previous_forecast_time = @previous_forecast_time[trip_id] and sleep_time = @sleep_time[trip_id]
         # The tram is slower/faster that we expected
+        # ∆ Time may not be larger then {@threshold} 
         if (forecast_time - previous_forecast_time).abs > @threshold
           update_client = true
         end
@@ -102,35 +108,39 @@ module LinearT
       
       # Is this the first run? {init?}
       if update_client or init?
-        # TODO: Update client
-        # update_client!
+        # TODO: Update client; update_client!
         puts "Train as left the station"
       end
       
       # Saves the current forecast time
       @previous_forecast_time[trip_id] = forecast_time
-    
+      
       # Is the tram nearby?
       # x ------------- tram --- station ---------------- next_station
-      if dest = @travel_times[line] and timetable_time = dest[destination] and diff < timetable_time and diff > 0          
+      if diff > 0          
         if diff > 30
           @sleep_time[trip_id] = 10
         else
           @sleep_time[trip_id] = 5
         end
-        update_in(@sleep_time[trip_id])
+        puts "Current diff is: #{diff}"
+        update_in(@sleep_time[trip_id], trip_id)
+        
       # Nope, it has already left the station
       # x ----------------- station --- tram ------------ next_station
-      elsif dest = @stations[line] and station = dest[destination]
-        station.init(trip_id).update!
+      elsif next_station = surrounding_stations[destination]
+        next_station.init(trip_id).update!
         wipe(trip_id)
+      
+      # This must be the end station
+      # There is no 'next station'
       else
         wipe(trip_id)
       end        
     end
     
-    def init(trip_id)
-      tap { self.trip_ids.push(trip_id); @init = true }
+    def init
+      tap { @init = true }
     end
     
     def init?
@@ -139,13 +149,9 @@ module LinearT
       return is
     end
     
-    def update_in(seconds)
-      if defined?(EM)
-        puts "update_in: #{seconds}".yellow
-        EM.add_timer(seconds) { self.update! }
-      else
-        puts "EM does not exist".red
-      end
+    def update_in(seconds, trip_id)
+      EM.add_timer(seconds) { self.update!(trip_id) }
+      puts "update_in: #{seconds}".yellow
     end
     
     def update_client!
@@ -153,7 +159,6 @@ module LinearT
     end
     
     def wipe(trip_id)
-      @trip_ids.delete(trip_id)
       @sleep_time.delete(trip_id)
       @previous_forecast_time.delete(trip_id)
       puts "Whipe: #{trip_id}".yellow

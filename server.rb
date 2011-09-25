@@ -9,12 +9,8 @@ EM.run do
     puts "Params: #{params}".yellow
   end
   
-  index = 0
   line_populator = LinearT::LinePopulator.new("00012110", "00001075")
   
-  puts "Start: #{line_populator.start}"
-  puts "Stop #{line_populator.stop}"
-  abort
   stations = line_populator.stations
   
   new_stations = []
@@ -24,24 +20,22 @@ EM.run do
   
   stations.each_with_index do |s, index|
     station = s.station
-    s.line = "4"
-    
+        
     previous = station[:before] || {}
     after = station[:after] || {}
     
-    s.previous = previous[:name]
-    s.next = after[:name]
+    s.line = "4"
     
     s.travel_times = {
-      previous: previous[:time],
-      next: after[:time]
+      line_populator.start => previous[:time],
+      line_populator.stop => after[:time]
     }
     
     s.surrounding_stations = {
-      previous: stations[index - 1],
-      next: stations[index + 1]
+      line_populator.start => stations[index - 1],
+      line_populator.stop => stations[index + 1]
     }
-    
+        
     s.id = station[:id]
     new_stations << s
   end
