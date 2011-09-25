@@ -9,8 +9,9 @@ module LinearT
     # @id Fixnum Station id
     # A unique identifier provided by VT. 
     # Example: 00012110 (Mölndal)
+    # @name String Station name. Example; Mölndal
     #
-    attr_accessor :id
+    attr_accessor :id, :name
     
     #
     # @station Hash Raw data
@@ -26,6 +27,7 @@ module LinearT
       @threshold              = 5
       @previous_forecast_time = {}
       @sleep_time             = {}
+      @backup                 = {}
     end
 
     #
@@ -98,15 +100,22 @@ module LinearT
       # If not; we should alert the next stop that
       # is should update the given {trip_id}
       unless departute = departures.select{ |d| d[:trip_id] == trip_id }.first
-        # TODO: Alert the next stop that is should update it self.
-        # surrounding_stations[departures[:destination]].init.update!(trip_id)
-        debug "Trip isn't here, abort abort!", :yellow; return
+        # Is there a next station?
+        # This might be the last one          
+        if next_station = @backup[trip_id]
+          next_station.update!(trip_id)
+        end
+        
+        wipe(trip_id)
+        debug "Tram isn't here, abort abort!", :yellow; return
       end
       
-      forecast_time = departute[:forecast_time] # When should it be here. Time object
-      destination   = departute[:destination]   # End station as a string; Example angered
-      line          = departute[:line]          # The current line
-      diff          = departute[:diff]          # When (in seconds) is the tram here?
+      
+      forecast_time = departute[:forecast_time]         # When should it be here. Time object
+      destination   = departute[:destination]           # End station as a string; Example angered
+      next_station  = surrounding_stations[destination] # Next station
+      line          = departute[:line]                  # The current line
+      diff          = departute[:diff]                  # When (in seconds) is the tram here?
       
       self.line = line
       
@@ -114,13 +123,16 @@ module LinearT
         # The given tram is slower/faster that we expected.
         # ∆ Time may not be larger then {@threshold}
         # The time it took to fetch the data {@request_time} should not be apart of the calculation.
-        threshold_diff = (forecast_time - previous_forecast_time).abs - @request_time
+        threshold_diff = (forecast_time - previous_forecast_time - @request_time).abs
         if threshold_diff  > @threshold
-          debug "Alert! Threshold diff is now #{threshold_diff} seconds.", :red
+          debug "Threshold diff is now #{threshold_diff} seconds.", :red
         else
           debug "Current threshold diff is #{threshold_diff}, max is #{@threshold} seconds."
         end
-      else
+      end
+      
+      if first_time?
+        @backup[trip_id] = next_station
         debug "First time this station is updated using trip id #{trip_id}.", :yellow
       end
       
@@ -141,7 +153,7 @@ module LinearT
         
       # Nope, it has already left the station
       # x ----------------- station --- tram ------------ next_station
-      elsif next_station = surrounding_stations[destination]
+      elsif next_station
         debug "Sending alert to next station.", :yellow
         next_station.update!(trip_id)
         wipe(trip_id)
@@ -175,6 +187,7 @@ module LinearT
     def wipe(trip_id)
       @sleep_time.delete(trip_id)
       @previous_forecast_time.delete(trip_id)
+      @backup.delete(trip_id)
       debug "Whipe: #{trip_id}.", :yellow
     end
     
@@ -188,13 +201,20 @@ module LinearT
     end
     
     #
+    # @return Boolean Is this the first time {@trip_id} is beign used?
+    #
+    def first_time?
+      !! @previous_forecast_time[@trip_id]
+    end
+    
+    #
     # @message String Message to be printed
     # @color Symbol Color for the given message to be printed in
     # Default color if noting is defined; green
     # Form; [trip_id][line] @message
     #
     def debug(message, color = :green)
-      puts "%-25s%s" % ["[#{@trip_id}][#{@line}]".black, message.send(color)]
+      puts "%-42s%s" % ["[#{@name}][#{@line}][#{@trip_id}]".black, message.send(color)]
     end
     
     # Name for the next and previous station

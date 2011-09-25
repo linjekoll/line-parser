@@ -30,7 +30,9 @@ EM.run do
       line_populator.start => stations[index - 1],
       line_populator.stop => stations[index + 1]
     }
-        
+    
+    s.name = station[:name]
+    
     s.id = station[:id]
     new_stations << s
   end
