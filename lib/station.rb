@@ -12,38 +12,42 @@ module LinearT
     # A unique identifier provided by VT. 
     # Example: 00012110 (Mölndal)
     attr_accessor :id
-        
-    def initialize(options)
-      @travel_times = {}.merge(options[:travel_times] || {})
-      @start_time   = {}
-      @previous_forecast_time = {}
-      @sleep_time   = {}
-      @stations     = {}.merge(options[:stations] || {})
-      @trip_ids     = [] # A list of nearby trains
-      @channel      = options[:channel] # EM channel
-      @id           = options[:id] # Station id
-      @threshold    = 5 # Max diff
+    
+    attr_reader :station, :line
+    def initialize(station)
+      @station = station
+      # @travel_times = {}.merge(options[:travel_times] || {})
+      # @start_time   = {}
+      # @previous_forecast_time = {}
+      # @sleep_time   = {}
+      # @stations     = {}.merge(options[:stations] || {})
+      # @trip_ids     = [] # A list of nearby trains
+      # @channel      = options[:channel] # EM channel
+      # @id           = options[:id] # Station id
+      # @threshold    = 5 # Max diff
+    end
+
+    
+    # Getter and setter methods for;
+    # @travel_times, @surrounding_station_objects, @next, @previous
+    # #line must be set before this can be used
+    # Take a look at the comments at the bottom of 
+    # the page for more info.
+    [:travel_times, :surrounding_stations, :next, :previous].each do |method|
+      define_method(method) do
+        instance_variable_get("@#{method}")[@line] || {}
+      end
       
-      # Getter and setter methods for;
-      # @travel_times, @surrounding_station_objects, @next, @previous
-      # #line must be set before this can be used
-      # Take a look at the comments at the bottom of 
-      # the page for more info.
-      self_methods.each do |method|
-        instance_variable_set("@#{method}") = {}
-        define_method(method) do
-          instance_variable_get("@#{method}")[@line]
-        end
-        
-        define_method("=#{method}") do |value|
-          instance_variable_get("@#{method}")[@line] = value
-        end
+      define_method("#{method}=") do |value|
+        var = instance_variable_get("@#{method}")
+        instance_variable_set("@#{method}", {}) unless var
+        instance_variable_get("@#{method}")[@line] = value
       end
     end
     
-    def self_methods
-      [:travel_times, :surrounding_station_objects, :next, :previous]
-    end
+    # def self_methods
+    #   
+    # end
     
     def update!
       url = %w{

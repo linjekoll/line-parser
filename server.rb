@@ -11,31 +11,33 @@ EM.run do
   
   index = 0
   stations = LinearT::LinePopulator.new("00012110", "00001075").stations
-  stations.map do |station|
-    s = LinearT::Station.new
-    
+  new_stations = []
+  stations.map! do |station|
+    LinearT::Station.new(station)
+  end
+  
+  stations.each_with_index do |s, index|
+    station = s.station
     s.line = "4"
     
     previous = station[:before] || {}
-    nect = station[:after] || {}
+    after = station[:after] || {}
     
-    s.previous = before[:name]
+    s.previous = previous[:name]
     s.next = after[:name]
     
     s.travel_times = {
-      s.before => before[:time],
-      s.after => after[:time]
+      previous: previous[:time],
+      next: after[:time]
     }
-    
-    s.id = station[:id]    
     
     s.surrounding_stations = {
-      station.before => stations[index - 1],
-      station.after => stations[index + 1]
+      previous: stations[index - 1],
+      next: stations[index + 1]
     }
     
-    # index++
-    index = index + 1    
+    s.id = station[:id]
+    new_stations << s
   end
 end
 

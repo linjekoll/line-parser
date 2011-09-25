@@ -102,4 +102,8 @@ describe LinearT::Station do
       end
     end    
   end
+  
+  describe "constructor" do
+    
+  end
 end
