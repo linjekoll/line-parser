@@ -3,20 +3,23 @@ require_relative "update"
 require_relative "base"
 
 module LinearT
-  class Station < LinearT::Base
-    # @trip_ids Array A list of trip_ids
-    # Each id consists of an VT identifier
-    attr_writer :trip_ids
-            
+  class Station < LinearT::Base            
+    #
     # @id Fixnum Station id
     # A unique identifier provided by VT. 
     # Example: 00012110 (Mölndal)
+    #
     attr_accessor :id
     
+    #
     # @station Hash Raw data
     # @line The current line, 4 for example
+    #
     attr_reader :station, :line
     
+    #
+    # @station A raw Hash from the LinePopulation class
+    #
     def initialize(station)
       @station                = station
       @threshold              = 5
@@ -79,7 +82,7 @@ module LinearT
     end
     
     #
-    # @trip_id Trip id that should be updated
+    # @trip_id Trip id that should be observed
     #
     def update!(trip_id)
       # Can we update the given trip id?
@@ -99,10 +102,13 @@ module LinearT
       self.line = line
       
       if previous_forecast_time = @previous_forecast_time[trip_id] and sleep_time = @sleep_time[trip_id]
-        # The tram is slower/faster that we expected
+        # The given tram is slower/faster that we expected.
         # ∆ Time may not be larger then {@threshold} 
-        if (forecast_time - previous_forecast_time).abs > @threshold
+        threshold_diff = (forecast_time - previous_forecast_time).abs
+        if threshold_diff  > @threshold
           update_client = true
+        else
+          puts "Current threshold diff is #{threshold_diff}, max is #{@threshold}.".green
         end
       end
       
@@ -139,29 +145,55 @@ module LinearT
       end        
     end
     
+    #
+    # @return Station
+    #
     def init
       tap { @init = true }
     end
     
+    #
+    # @return Boolean Has Station#init been called?
+    #
     def init?
       is = @init
       @init = false
       return is
     end
     
+    #
+    # @seconds Fixnum Time in seconds to next update
+    # @trip_id String Trip id that should be updated
+    #
     def update_in(seconds, trip_id)
       EM.add_timer(seconds) { self.update!(trip_id) }
       puts "update_in: #{seconds}".yellow
     end
     
+    #
+    # Notify client
+    #
     def update_client!
       puts "update_client!".yellow
     end
     
+    #
+    # Ghetto garbage collector
+    # @trip_id String Clear data stored for {trip_id}
+    #
     def wipe(trip_id)
       @sleep_time.delete(trip_id)
       @previous_forecast_time.delete(trip_id)
       puts "Whipe: #{trip_id}".yellow
+    end
+    
+    #
+    # @line Fixnum VT unique identifier
+    # This but set before the use of;
+    # Station#travel_times, #next and so on
+    #
+    def line=(line)
+      @line = line
     end
     
     # Name of the next and previous station
@@ -195,12 +227,5 @@ module LinearT
     # def surrounding_stations=(surrounding_stations)
     #   @surrounding_stations[@line] = surrounding_stations
     # end
-        
-    # @line Fixnum VT unique identifier
-    # This but set before the use of;
-    # #travel_times, #next and so on
-    def line=(line)
-      @line = line
-    end
   end
 end
