@@ -85,7 +85,7 @@ module LinearT
       # How long did the request take?
       @request_time = Time.now.to_i - start_timer
       
-      return destination
+      return departures
     end
     
     #
@@ -112,18 +112,14 @@ module LinearT
         # The given tram is slower/faster that we expected.
         # ∆ Time may not be larger then {@threshold}
         # The time it took to fetch the data {@request_time} should not be apart of the calculation.
-        threshold_diff = (forecast_time - previous_forecast_time).abs - @request_time
+        threshold_diff = ((forecast_time - previous_forecast_time) - @request_time).abs
         if threshold_diff  > @threshold
-          update_client = true
+          puts "Alert; something has gone wrong along the way. Threshold diff is now #{threshold_diff}".red
         else
           puts "Current threshold diff is #{threshold_diff}, max is #{@threshold}.".green
         end
-      end
-      
-      # Is this the first run? {init?}
-      if update_client or init?
-        # TODO: Update client; update_client!
-        puts "Train as left the station"
+      else
+        puts "First time this station is updated using trip id #{trip_id}".yellow
       end
       
       # Saves the current forecast time
@@ -137,15 +133,16 @@ module LinearT
         else
           @sleep_time[trip_id] = 5
         end
-        puts "Current diff is: #{diff}"
+        
+        puts "Arriving at station in #{diff} seconds.".blue
         update_in(@sleep_time[trip_id], trip_id)
         
       # Nope, it has already left the station
       # x ----------------- station --- tram ------------ next_station
       elsif next_station = surrounding_stations[destination]
-        next_station.init(trip_id).update!
+        puts "Sending alert to next station.".yellow
+        next_station.update!(trip_id)
         wipe(trip_id)
-      
       # This must be the end station
       # There is no 'next station'
       else
