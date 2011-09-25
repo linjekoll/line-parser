@@ -39,6 +39,8 @@ EM.run do
     s.id = station[:id]
     new_stations << s
   end
+  
+  puts stations[4].departures
 end
 
 # ,

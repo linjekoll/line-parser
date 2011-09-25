@@ -13,7 +13,10 @@ module LinearT
     # Example: 00012110 (Mölndal)
     attr_accessor :id
     
+    # @station Hash Raw data
+    # @line The current line, 4 for example
     attr_reader :station, :line
+    
     def initialize(station)
       @station = station
       # @travel_times = {}.merge(options[:travel_times] || {})
@@ -49,19 +52,34 @@ module LinearT
     #   
     # end
     
-    def update!
+    def get_all_trip_ids
+      
+    end
+    
+    def departures
       url = %w{
         http://vasttrafik.se/External_Services/NextTrip.asmx/GetForecast?
         identifier=%s&
         stopId=%s
       }.join % [api_key, @id]
-
-      download!(url).css("forecast items item").each do |stop|      
-        forecast_time = Time.parse(stop.attr("next_trip_forecast_time")).to_i
-        diff         = forecast_time - Time.now.to_i
-        destination  = stop.at_css("destination").content
-        trip_id      = stop.attr("trip_id")
-        line         = stop.attr("line_id")
+      
+      return download!(url).css("forecast items item").map do |stop|; {
+          forecast_time: Time.parse(stop.attr("next_trip_forecast_time")).to_i,
+          diff: forecast_time - Time.now.to_i,
+          destination: stop.at_css("destination").content,
+          trip_id: stop.attr("trip_id"),
+          line: stop.attr("line_id")
+        }
+      end
+    end
+    
+    def update!
+      departures.each do |stop|      
+        forecast_time = stop[:forecast_time]
+        destination   = stop[:destination]
+        trip_id       = stop[:trip_id]
+        line          = stop[:line]
+        diff          = stop[:diff]
         
         next unless @trip_ids.include?(trip_id)
                 

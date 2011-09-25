@@ -5,7 +5,7 @@ module LinearT
     end
     
     def download!(url)
-      @_download ||= Nokogiri::XML(lambda {
+      Nokogiri::XML(lambda {
         data =  RestClient.get(url)
         data = data.match(%r{<string xmlns="http://vasttrafik.se/">(.+)</string>}).to_a[1].to_s
         data.gsub(%r{&lt;}, "<").gsub(%r{&gt;}, ">")
