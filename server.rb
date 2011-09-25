@@ -10,7 +10,13 @@ EM.run do
   end
   
   index = 0
-  stations = LinearT::LinePopulator.new("00012110", "00001075").stations
+  line_populator = LinearT::LinePopulator.new("00012110", "00001075")
+  
+  puts "Start: #{line_populator.start}"
+  puts "Stop #{line_populator.stop}"
+  abort
+  stations = line_populator.stations
+  
   new_stations = []
   stations.map! do |station|
     LinearT::Station.new(station)
@@ -40,7 +46,15 @@ EM.run do
     new_stations << s
   end
   
-  puts stations[4].departures
+  station = stations[4]
+  w = station.departures.reject do |dep|
+    not dep[:line] == "4" 
+  end
+  
+  trip_id = w.first[:trip_id]
+  
+  station.update!(trip_id)
+  
 end
 
 # ,

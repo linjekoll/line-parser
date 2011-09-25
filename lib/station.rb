@@ -27,7 +27,10 @@ module LinearT
       # @trip_ids     = [] # A list of nearby trains
       # @channel      = options[:channel] # EM channel
       # @id           = options[:id] # Station id
-      # @threshold    = 5 # Max diff
+      
+      @threshold              = 5 # Max diff
+      @previous_forecast_time = {}
+      @sleep_time             = {}
     end
 
     
@@ -47,15 +50,7 @@ module LinearT
         instance_variable_get("@#{method}")[@line] = value
       end
     end
-    
-    # def self_methods
-    #   
-    # end
-    
-    def get_all_trip_ids
-      
-    end
-    
+        
     def departures
       url = %w{
         http://vasttrafik.se/External_Services/NextTrip.asmx/GetForecast?
@@ -63,8 +58,10 @@ module LinearT
         stopId=%s
       }.join % [api_key, @id]
       
-      return download!(url).css("forecast items item").map do |stop|; {
-          forecast_time: Time.parse(stop.attr("next_trip_forecast_time")).to_i,
+      return download!(url).css("forecast items item").map do |stop|
+        forecast_time = Time.parse(stop.attr("next_trip_forecast_time")).to_i
+        {
+          forecast_time: forecast_time,
           diff: forecast_time - Time.now.to_i,
           destination: stop.at_css("destination").content,
           trip_id: stop.attr("trip_id"),
@@ -73,46 +70,63 @@ module LinearT
       end
     end
     
-    def update!
-      departures.each do |stop|      
-        forecast_time = stop[:forecast_time]
-        destination   = stop[:destination]
-        trip_id       = stop[:trip_id]
-        line          = stop[:line]
-        diff          = stop[:diff]
-        
-        next unless @trip_ids.include?(trip_id)
-                
-        if previous_forecast_time = @previous_forecast_time[trip_id] and sleep_time = @sleep_time[trip_id]
-          # The tram is slower/faster that we expected
-          if (forecast_time - previous_forecast_time).abs > @threshold
-            update_client = true
-          end
-        end
-        
-        # Is this the first run? {init?}
-        update_client! if update_client or init?
-        
-        @previous_forecast_time[trip_id] = forecast_time
-        
-        # Is the tram nearby?
-        # x ------------- tram --- station ---------------- next_station
-        if dest = @travel_times[line] and timetable_time = dest[destination] and diff < timetable_time and diff > 0          
-          if diff > 30
-            @sleep_time[trip_id] = 10
-          else
-            @sleep_time[trip_id] = 5
-          end
-          update_in(@sleep_time[trip_id])
-        # Nope, it has already left the station
-        # x ----------------- station --- tram ------------ next_station
-        elsif dest = @stations[line] and station = dest[destination]
-          station.init(trip_id).update!
-          wipe(trip_id)
-        else
-          wipe(trip_id)
-        end        
+    #
+    # @trip_id Trip id that should be updated
+    #
+    def update!(trip_id)
+      # Can we update the given trip id?
+      # If not; we should alert the next stop that
+      # is should update the given {trip_id}
+      unless departute = departures.select{ |d| d[:trip_id] == trip_id }.first
+        # TODO: Alert the next stop that is should update it self.
+        # nextstation.init.update!(trip_id) <= Something like that
+        puts "Trip isn't here, abort abort!".yellow; return
       end
+      
+      forecast_time = departute[:forecast_time]
+      destination   = departute[:destination]
+      line          = departute[:line]
+      diff          = departute[:diff]
+      
+      # All data selected using;
+      # :travel_times, :surrounding_stations, :next, :previous
+      # depends on {line}
+      self.line = line
+      
+      if previous_forecast_time = @previous_forecast_time[trip_id] and sleep_time = @sleep_time[trip_id]
+        # The tram is slower/faster that we expected
+        if (forecast_time - previous_forecast_time).abs > @threshold
+          update_client = true
+        end
+      end
+      
+      # Is this the first run? {init?}
+      if update_client or init?
+        # TODO: Update client
+        # update_client!
+        puts "Train as left the station"
+      end
+      
+      # Saves the current forecast time
+      @previous_forecast_time[trip_id] = forecast_time
+    
+      # Is the tram nearby?
+      # x ------------- tram --- station ---------------- next_station
+      if dest = @travel_times[line] and timetable_time = dest[destination] and diff < timetable_time and diff > 0          
+        if diff > 30
+          @sleep_time[trip_id] = 10
+        else
+          @sleep_time[trip_id] = 5
+        end
+        update_in(@sleep_time[trip_id])
+      # Nope, it has already left the station
+      # x ----------------- station --- tram ------------ next_station
+      elsif dest = @stations[line] and station = dest[destination]
+        station.init(trip_id).update!
+        wipe(trip_id)
+      else
+        wipe(trip_id)
+      end        
     end
     
     def init(trip_id)

@@ -6,9 +6,20 @@ require_relative "base"
 
 module LinearT
   class LinePopulator < LinearT::Base
+    # @start, @stop String Start and end station 
+    attr_reader :start, :stop
+    
     def initialize(from, to)
       @from = from
       @to = to
+    end
+    
+    def start
+      @start ||= content.at_css("details item from stop_name").content
+    end
+    
+    def stop
+      @stop ||= content.at_css("details item to stop_name").content
     end
     
     def stations
