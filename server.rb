@@ -12,29 +12,37 @@ EM.run do
   index = 0
   stations = LinearT::LinePopulator.new("00012110", "00001075").stations
   stations.map do |station|
-    before = station[:before] || {}
-    after = station[:after] || {}
+    s = LinearT::Station.new
     
-    hash = {
-      travel_times: {
-        station[:line] => {
-          before[:name] => before[:time],
-          after[:name] => after[:time]
-        }
-      },
-      stations: {
-        station[:line] => {
-          before[:name] => stations[index - 1],
-          after[:name] => stations[index + 1]
-        }
-      },
-      id: station[:id]
+    s.line = "4"
+    
+    previous = station[:before] || {}
+    nect = station[:after] || {}
+    
+    s.previous = before[:name]
+    s.next = after[:name]
+    
+    s.travel_times = {
+      s.before => before[:time],
+      s.after => after[:time]
     }
     
-    puts "Running: #{station[:id]}"
-    EM.defer { LinearT::Station.new(hash).update! }
+    s.id = station[:id]    
+    
+    s.surrounding_stations = {
+      station.before => stations[index - 1],
+      station.after => stations[index + 1]
+    }
     
     # index++
-    index = index + 1
+    index = index + 1    
   end
 end
+
+# ,
+# stations: {
+#   station[:line] => {
+#     before[:name] => stations[index - 1],
+#     after[:name] => stations[index + 1]
+#   }
+# },

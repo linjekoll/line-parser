@@ -51,7 +51,7 @@ module LinearT
     
     private      
       def content
-        options = [api_key, @from, @to, URI.escape("2011-09-15 12:00"), 1,1,0,1]
+        options = [api_key, @from, @to, URI.escape("2011-09-27 12:00"), 1,1,0,1]
         url = %w{
           http://vasttrafik.se/External_Services/TravelPlanner.asmx/GetRoute?
           identifier=%s&
