@@ -111,16 +111,13 @@ module LinearT
         wipe(trip_id); return
       end
       
-      
-      forecast_time = departute[:forecast_time]         # When should it be here. Time object
-      destination   = departute[:destination]           # End station as a string; Example angered
-      next_station  = surrounding_stations[destination] # Next station
-      line          = departute[:line]                  # The current line
-      diff          = departute[:diff]                  # When (in seconds) is the tram here?
-      
-      self.line = line
-      
-      if previous_forecast_time = @previous_forecast_time[trip_id] and sleep_time = @sleep_time[trip_id]
+      line          = departute[:line]                         # The current line
+      forecast_time = departute[:forecast_time]                # When should it be here. Time object
+      destination   = departute[:destination]                  # End station as a string; Example angered
+      next_station  = @surrounding_stations[line][destination] # Next station
+      diff          = departute[:diff]                         # When (in seconds) is the tram here?
+            
+      if previous_forecast_time = @previous_forecast_time[trip_id]
         # The given tram is slower/faster that we expected.
         # ∆ Time may not be larger then {@threshold}
         # The time it took to fetch the data {@request_time} should not be apart of the calculation.
@@ -132,20 +129,12 @@ module LinearT
         end
       end
       
-      if first_time?
-        debug "First time this station is updated using trip id #{trip_id}.", :yellow
-      end
-      
-      unless @backup[trip_id]
-        @backup[trip_id] = next_station
-      end
-      
-      # Saves the current forecast time
+      @backup[trip_id]                 = next_station
       @previous_forecast_time[trip_id] = forecast_time
             
       # Is the tram nearby?
       # x ------------- tram --- station ---------------- next_station
-      if diff + @sleep_time[trip_id].to_i + threshold_diff.to_i >= 0          
+      if diff + @sleep_time[trip_id].to_i >= 0
         if diff > 30
           @sleep_time[trip_id] = 10
         else
@@ -163,9 +152,6 @@ module LinearT
         wipe(trip_id)
       # This must be the end station
       # There is no 'next station'
-      else
-        debug "Oops, something went wrong. diff=#{diff}.", :red
-        wipe(trip_id)
       end        
     end
     
@@ -202,13 +188,6 @@ module LinearT
     #
     def line=(line)
       @line = line
-    end
-    
-    #
-    # @return Boolean Is this the first time {@trip_id} is beign used?
-    #
-    def first_time?
-      !! @previous_forecast_time[@trip_id]
     end
     
     #
