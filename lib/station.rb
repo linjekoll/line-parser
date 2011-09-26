@@ -92,9 +92,11 @@ module LinearT
     end
     
     #
-    # @trip_id Trip id that should be observed
+    # @trip_id String Trip id that should be observed
+    # @initialized Boolean Is this the first time 
+    # #update! is being called with @trip_id?
     #
-    def update!(trip_id)
+    def update!(trip_id, initialized = false)
       @trip_id = trip_id
       # Can we update the given trip id?
       # If not; we should alert the next stop that
@@ -104,6 +106,9 @@ module LinearT
         # This might be the last one          
         if next_station = @backup[trip_id]
           next_station.update!(trip_id)
+        elsif initialized # Is this the first time the station is being called with {trip_id}?
+          debug "First update for this station, but there is no tram.", :blue
+          update_in(12, trip_id, false); return
         else
           debug "End station, thank you for traveling with VT."
         end
@@ -111,11 +116,16 @@ module LinearT
         wipe(trip_id); return
       end
       
-      line          = departute[:line]                         # The current line
+      if initialized
+        debug "This is the first time this station is being called.", :magenta
+      end
       
-      return unless @surrounding_stations[line]
+      unless @surrounding_stations[departute[:line]]
+        debug "We don't have any data to work with on line #{departute[:line]}, abort.", :red; return
+      end
             
       forecast_time = departute[:forecast_time]                # When should it be here. Time object
+      line          = departute[:line]                         # The current line
       destination   = departute[:destination]                  # End station as a string; Example angered
       next_station  = @surrounding_stations[line][destination] # Next station
       diff          = departute[:diff]                         # When (in seconds) is the tram here?
@@ -157,19 +167,19 @@ module LinearT
       # x ----------------- station --- tram ------------ next_station
       elsif @backup[trip_id]
         debug "Sending alert to next station.", :yellow
-        next_station.update!(trip_id)
+        next_station.update!(trip_id, true)
         wipe(trip_id)
-      # This must be the end station
-      # There is no 'next station'
-      end        
+      end
+      
+      puts "\n"
     end
     
     #
     # @seconds Fixnum Time in seconds to next update
     # @trip_id String Trip id that should be updated
     #
-    def update_in(seconds, trip_id)
-      EM.add_timer(seconds) { self.update!(trip_id) }
+    def update_in(seconds, trip_id, initialized = false)
+      EM.add_timer(seconds) { self.update!(trip_id, initialized) }
       debug "Next update in %.1f seconds." % seconds, :yellow
     end
     
@@ -203,12 +213,18 @@ module LinearT
     # @message String Message to be printed
     # @color Symbol Color for the given message to be printed in
     # Default color if noting is defined; green
-    # Form; [trip_id][line] @message
+    # Form; [station][line][trip_id] @message
     #
     def debug(message, color = :green)
-      puts "%-50s%s" % ["[#{@name}][#{@line}][#{@trip_id}]".send(colours[@trip_id.to_i % colours.length]), message.send(color)]
+      puts "%-50s%s" % ["[#{@name}][#{@line}][#{@trip_id}]".
+        send(colours[@trip_id.to_i % colours.length]), message.send(color)]
     end
     
+    #
+    # @return Array A list of colours
+    # This method is beign used but #debug
+    # Colours copied from https://github.com/fazibear/colorize/blob/master/lib/colorize.rb
+    #
     def colours
       [
         :black, :red, :green, :yellow, :blue, :magenta, :cyan, :white, :default, :light_black, 

@@ -51,7 +51,7 @@ EM.run do
     
     if not departure.nil? and not started.include?(departure[:trip_id])
       started << departure[:trip_id]
-      EM.defer { station.update!(departure[:trip_id]) }
+      EM.defer { station.update!(departure[:trip_id], true) }
     end
   end  
 end
