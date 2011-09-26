@@ -47,7 +47,5 @@ EM.run do
     unless departure.nil?
       station.update!(departure[:trip_id]); break
     end
-  end    
-  
-  puts "The end".blue
+  end  
 end

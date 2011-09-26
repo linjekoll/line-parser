@@ -105,11 +105,10 @@ module LinearT
         if next_station = @backup[trip_id]
           next_station.update!(trip_id)
         else
-          debug "Nope, nothing here. next_station=#{next_station}.", :red
+          debug "End station, thank you for traveling with VT."
         end
         
         wipe(trip_id)
-        debug "Tram isn't here, abort abort!", :yellow; return
       end
       
       
@@ -143,9 +142,7 @@ module LinearT
       
       # Saves the current forecast time
       @previous_forecast_time[trip_id] = forecast_time
-      
-      puts "NEXT STATION: #{next_station.class}" # DEBUGGER
-      
+            
       # Is the tram nearby?
       # x ------------- tram --- station ---------------- next_station
       if diff + @sleep_time[trip_id].to_i + threshold_diff.to_i >= 0          
@@ -196,7 +193,6 @@ module LinearT
       @sleep_time.delete(trip_id)
       @previous_forecast_time.delete(trip_id)
       @backup.delete(trip_id)
-      debug "Whipe: #{trip_id}.", :yellow
     end
     
     #
