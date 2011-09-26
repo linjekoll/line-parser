@@ -28,8 +28,6 @@ module LinearT
        item = content.at_css("items item")    
        line = item.at_css("item").attr("line").split(",")[0]
        @stops = item.css("between_stops item").map do |stop|
-         puts stop.inspect
-         puts "--------------------"
          {
            name: stop.at_css("stop_name").content,
            stop_time: Time.parse(stop.attr("stop_time")),
@@ -79,9 +77,7 @@ module LinearT
           numberOfResultBefore=%s&
           numberOfResulsAfter=%s
         }.join % options
-        
-        puts url.blue
-        
+                
         download!(url)        
       end
   end
