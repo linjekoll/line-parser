@@ -7,11 +7,12 @@ require_relative "base"
 module LinearT
   class LinePopulator < LinearT::Base
     # @start, @stop String Start and end station 
-    attr_reader :start, :stop
+    attr_reader :start, :stop, :line
     
-    def initialize(from, to)
+    def initialize(from, to, line)
       @from = from
-      @to = to
+      @to   = to
+      @line = line
     end
     
     def start
@@ -27,12 +28,16 @@ module LinearT
        item = content.at_css("items item")    
        line = item.at_css("item").attr("line").split(",")[0]
        @stops = item.css("between_stops item").map do |stop|
+         puts stop.inspect
+         puts "--------------------"
          {
            name: stop.at_css("stop_name").content,
            stop_time: Time.parse(stop.attr("stop_time")),
            id: stop.attr("stop_id"),
            line: line
          }
+       end.reject do |stop|
+          not stop[:line] == @line
        end
 
        @stops.each_with_index do |stop, index|
@@ -74,6 +79,8 @@ module LinearT
           numberOfResultBefore=%s&
           numberOfResulsAfter=%s
         }.join % options
+        
+        puts url.blue
         
         download!(url)        
       end

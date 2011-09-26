@@ -11,13 +11,13 @@ module LinearT
     # Example: 00012110 (Mölndal)
     # @name String Station name. Example; Mölndal
     #
-    attr_accessor :id, :name
+    attr_accessor :id, :name, :line
     
     #
     # @station Hash Raw data
     # @line The current line, 4 for example
     #
-    attr_reader :station, :line
+    attr_reader :station
     
     #
     # @station A raw Hash from the LinePopulation class
@@ -112,6 +112,9 @@ module LinearT
       end
       
       line          = departute[:line]                         # The current line
+      
+      return unless @surrounding_stations[line]
+            
       forecast_time = departute[:forecast_time]                # When should it be here. Time object
       destination   = departute[:destination]                  # End station as a string; Example angered
       next_station  = @surrounding_stations[line][destination] # Next station
@@ -134,11 +137,17 @@ module LinearT
             
       # Is the tram nearby?
       # x ------------- tram --- station ---------------- next_station
-      if diff + @sleep_time[trip_id].to_i >= 0
-        if diff > 30
-          @sleep_time[trip_id] = 10
+      if diff >= 0
+        total_time = @travel_times[line][destination]
+        
+        if diff > total_time
+          @sleep_time[trip_id] = diff - total_time
+          debug "Trail isn't nearby, sleeping for a while."
+        elsif next_estimated_update = 30 * (diff.abs.to_f / total_time) and next_estimated_update.to_i > 0
+          @sleep_time[trip_id] = next_estimated_update
         else
-          @sleep_time[trip_id] = 5
+          debug "Window is to small.", :red
+          @sleep_time[trip_id] = 1
         end
         
         debug "Arriving at station in #{diff} seconds.", :blue
@@ -161,7 +170,7 @@ module LinearT
     #
     def update_in(seconds, trip_id)
       EM.add_timer(seconds) { self.update!(trip_id) }
-      debug "Next update in #{seconds} seconds.", :yellow
+      debug "Next update in %.1f seconds." % seconds, :yellow
     end
     
     #
@@ -197,7 +206,7 @@ module LinearT
     # Form; [trip_id][line] @message
     #
     def debug(message, color = :green)
-      puts "%-42s%s" % ["[#{@name}][#{@line}][#{@trip_id}]".black, message.send(color)]
+      puts "%-45s%s" % ["[#{@name}][#{@line}][#{@trip_id}]".black, message.send(color)]
     end
     
     # Name for the next and previous station

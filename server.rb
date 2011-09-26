@@ -4,7 +4,7 @@ require_relative "lib/line_populator"
 require_relative "lib/station"
 
 EM.run do
-  line_populator = LinearT::LinePopulator.new("00012110", "00001075")
+  line_populator = LinearT::LinePopulator.new("00012110", "00001075", "4")
   
   stations = line_populator.stations
   
@@ -18,9 +18,9 @@ EM.run do
   
     before = station[:before] || {}
     after = station[:after] || {}
-    
-    s.line = "4"
-    
+        
+    s.line = line_populator.line
+        
     s.travel_times = {
       line_populator.start => before[:time],
       line_populator.stop => after[:time]
@@ -36,16 +36,23 @@ EM.run do
     s.id = station[:id]
     new_stations << s
   end
-  
+
   departure = nil
-  station = nil
-  stations.each do |station|
-    departure = station.departures.reject do |dep|
-      not dep[:line] == "4" 
-    end.first
+  station   = nil
+  started   = []
+  
+  new_stations.each do |station|
     
-    unless departure.nil?
-      station.update!(departure[:trip_id]); break
+    departure = station.departures.reject do |departure|
+      departure[:diff] <= 0
+    end.sort_by do |departure|
+       departure[:diff]
+    end.first    
+    
+    if not departure.nil? and not started.include?(departure[:trip_id])
+      started << departure[:trip_id]
+      puts "Starting trip #{departure[:trip_id]}, Line #{station.line}".green
+      station.update!(departure[:trip_id]);
     end
   end  
 end
