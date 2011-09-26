@@ -51,8 +51,7 @@ EM.run do
     
     if not departure.nil? and not started.include?(departure[:trip_id])
       started << departure[:trip_id]
-      puts "Starting trip #{departure[:trip_id]}, Line #{station.line}".green
-      station.update!(departure[:trip_id]);
+      EM.defer { station.update!(departure[:trip_id]) }
     end
   end  
 end

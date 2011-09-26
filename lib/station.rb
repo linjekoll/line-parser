@@ -206,7 +206,14 @@ module LinearT
     # Form; [trip_id][line] @message
     #
     def debug(message, color = :green)
-      puts "%-45s%s" % ["[#{@name}][#{@line}][#{@trip_id}]".black, message.send(color)]
+      puts "%-50s%s" % ["[#{@name}][#{@line}][#{@trip_id}]".send(colours[@trip_id.to_i % colours.length]), message.send(color)]
+    end
+    
+    def colours
+      [
+        :black, :red, :green, :yellow, :blue, :magenta, :cyan, :white, :default, :light_black, 
+        :light_red, :light_green, :light_blue, :light_magenta, :light_cyan, :light_white
+      ]
     end
     
     # Name for the next and previous station
