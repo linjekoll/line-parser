@@ -48,4 +48,6 @@ EM.run do
       station.update!(departure[:trip_id]); break
     end
   end    
+  
+  puts "The end".blue
 end

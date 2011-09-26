@@ -104,6 +104,8 @@ module LinearT
         # This might be the last one          
         if next_station = @backup[trip_id]
           next_station.update!(trip_id)
+        else
+          debug "Nope, nothing here. next_station=#{next_station}.", :red
         end
         
         wipe(trip_id)
@@ -132,16 +134,21 @@ module LinearT
       end
       
       if first_time?
-        @backup[trip_id] = next_station
         debug "First time this station is updated using trip id #{trip_id}.", :yellow
+      end
+      
+      unless @backup[trip_id]
+        @backup[trip_id] = next_station
       end
       
       # Saves the current forecast time
       @previous_forecast_time[trip_id] = forecast_time
       
+      puts "NEXT STATION: #{next_station.class}" # DEBUGGER
+      
       # Is the tram nearby?
       # x ------------- tram --- station ---------------- next_station
-      if diff > 0          
+      if diff + @sleep_time[trip_id].to_i + threshold_diff.to_i >= 0          
         if diff > 30
           @sleep_time[trip_id] = 10
         else
@@ -153,13 +160,14 @@ module LinearT
         
       # Nope, it has already left the station
       # x ----------------- station --- tram ------------ next_station
-      elsif next_station
+      elsif @backup[trip_id]
         debug "Sending alert to next station.", :yellow
         next_station.update!(trip_id)
         wipe(trip_id)
       # This must be the end station
       # There is no 'next station'
       else
+        debug "Oops, something went wrong. diff=#{diff}.", :red
         wipe(trip_id)
       end        
     end
