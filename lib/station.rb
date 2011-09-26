@@ -108,7 +108,7 @@ module LinearT
           debug "End station, thank you for traveling with VT."
         end
         
-        wipe(trip_id)
+        wipe(trip_id); return
       end
       
       
