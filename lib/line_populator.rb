@@ -27,6 +27,7 @@ module LinearT
       return @stops if @stops
        item = content.at_css("items item")    
        line = item.at_css("item").attr("line").split(",")[0]
+              
        @stops = item.css("between_stops item").map do |stop|
          {
            name: stop.at_css("stop_name").content,
